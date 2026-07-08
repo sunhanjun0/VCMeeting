@@ -1,10 +1,12 @@
 # LivePage 工作进度与交接（PROGRESS）
 
-> 下次打开项目，先读这份，即可无缝续接。最后更新：2026-07-07。
+> 下次打开项目，先读这份，即可无缝续接。最后更新：2026-07-08。
 
 ## 当前阶段
 
-**规划/设计阶段，尚无代码。** 产品规格与技术设计已定稿并冻结，下一步是拆解 M1 开发任务并开始编码。
+**M1 编码中。** 阶段 0（脚手架）、阶段 1（core 双层总线）、阶段 2（services：room-manager/token/content-store）、阶段 3（room 建房/加入/重连，两端）已完成并通过浏览器端到端验证。**下一步：阶段 4.1** — 服务端内容上传 `POST /api/rooms/:roomId/content`（multipart + host 会话鉴权）→ content-store。
+>
+> 已验证流程：建房→跳转 `/room/:id`（host 角色）；访客加入→角色/人数正确；`participant:joined/left` 实时广播；离开→回首页；同浏览器 sessionId 重连以 host 恢复。28 个后端单测通过（room-manager 9 / token 7 / content-store 12）。
 
 ## 文档地图（读这些，按顺序）
 
@@ -73,7 +75,7 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 |---|------|------|------|----------|------|
 | 3.1 | server `features/room`：`room:create`（nanoid 不可枚举 + passwordHash 加盐） | server/features/room | 2.1,2.2 | ack 返回 `{roomId, token, sessionId}`，创建者为 host | ✅ |
 | 3.2 | server `features/room`：`room:join`（密码/token 校验）+ 加入快照(§5.3) + `participant:joined/left` 广播 | server/features/room | 3.1 | ack 返回完整快照；房号不可枚举 | ✅ |
-| 3.3 | client `features/room`：Home 建房/加入表单 + Room 页装配 + sessionId 持久化 | client/features/room | 1.4 | 建房跳转 `/room/:id`；join 后拿快照渲染 | ⬜ |
+| 3.3 | client `features/room`：Home 建房/加入表单 + Room 页装配 + sessionId 持久化 | client/features/room | 1.4 | 建房跳转 `/room/:id`；join 后拿快照渲染 | ✅ |
 
 ### 阶段 4 · features · content（上传同源托管 + iframe 渲染）
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
