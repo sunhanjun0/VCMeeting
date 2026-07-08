@@ -1,6 +1,4 @@
 // HTTP + Socket.io bootstrap and module assembly.
-// M1 (task 0.2): minimal server that boots, exposes a health check, and accepts
-// Socket.io connections. core/registry, features, and gateway wiring land in later tasks.
 
 import http from 'node:http';
 import express from 'express';
@@ -9,6 +7,10 @@ import { config } from './config.js';
 import { createBus } from './core/bus.js';
 import { createRegistry } from './core/registry.js';
 import { createSocketGateway } from './core/socket-gateway.js';
+import { createRoomManager } from './services/room-manager.js';
+import { createTokenService } from './services/token.js';
+import { createContentStore } from './services/content-store.js';
+import { createRoomModule } from './features/room/index.js';
 
 const app = express();
 
@@ -22,12 +24,22 @@ const io = new SocketIoServer(httpServer, {
   cors: { origin: config.corsOrigin }
 });
 
-// --- Core assembly (features are registered in later tasks) ---
-const bus = createBus();
-const registry = createRegistry({ bus, config });
-// registry.use(roomModule, contentModule, ...)  <-- tasks 3.x / 4.x
+// --- Infrastructure services ---
+const rooms = createRoomManager({ idleReclaimMs: config.roomIdleReclaimMinutes * 60 * 1000 });
+const tokens = createTokenService({ ttlHours: config.tokenTtlHours });
+const content = createContentStore({ dataDir: config.dataDir, maxBytes: config.uploadMaxMb * 1024 * 1024 });
 
-createSocketGateway({ io, bus, handlers: registry.socketEvents() });
+// --- Core assembly ---
+const bus = createBus();
+// Gateway is created first so feature modules can receive its outbound `net` API;
+// handlers are attached afterwards once modules have registered their socketEvents.
+const gateway = createSocketGateway({ io, bus });
+const registry = createRegistry({ bus, config, services: { rooms, tokens, content }, net: gateway });
+registry.use(
+  createRoomModule({ rooms, tokens })
+  // contentModule, ... <-- task 4.x
+);
+gateway.setHandlers(registry.socketEvents());
 
 httpServer.listen(config.port, () => {
   console.log(`[livepage] server listening on :${config.port}`);

@@ -13,9 +13,17 @@ import { ENVELOPE_VERSION, HOST_ONLY, NET_OUT } from './events.js';
 
 const WIRE_EVENT = 'net';
 
-export function createSocketGateway({ io, bus, handlers }) {
+export function createSocketGateway({ io, bus, handlers = {} } = {}) {
   // sessionId -> socketId, so relay (webrtc:signal) and directed pushes can target a session.
   const sessionSockets = new Map();
+
+  // Handlers may be set after construction (setHandlers), which lets feature
+  // modules receive the gateway's outbound `net` API at registration time while
+  // still supplying their socketEvents afterwards (resolves the assembly cycle).
+  let handlerMap = handlers;
+  function setHandlers(next) {
+    handlerMap = next || {};
+  }
 
   const pack = (type, payload) => ({ type, v: ENVELOPE_VERSION, payload });
 
@@ -26,6 +34,12 @@ export function createSocketGateway({ io, bus, handlers }) {
   function sendToSession(sessionId, type, payload) {
     const socketId = sessionSockets.get(sessionId);
     if (socketId) sendToSocket(socketId, type, payload);
+  }
+
+  // Broadcast to a whole room — used by bus-driven flows (e.g. disconnect) that
+  // have no per-message socket context.
+  function broadcastToRoom(roomId, type, payload) {
+    io.to(roomId).emit(WIRE_EVENT, pack(type, payload));
   }
 
   io.on('connection', (socket) => {
@@ -51,7 +65,7 @@ export function createSocketGateway({ io, bus, handlers }) {
     const { type, payload } = envelope;
 
     const respond = makeAck(ack);
-    const handler = handlers[type];
+    const handler = handlerMap[type];
 
     // Unknown type: gracefully ignore for forward-compat (§13.2). Ack if the
     // client expected a response so it isn't left hanging.
@@ -113,15 +127,18 @@ export function createSocketGateway({ io, bus, handlers }) {
         target.emit(WIRE_EVENT, pack(type, data));
       },
       sendToSession,
-      sendToSocket
+      sendToSocket,
+      broadcastToRoom
     };
     return ctx;
   }
 
   return {
-    // Exposed so feature modules driven by bus events (not inbound sockets) can push out.
+    setHandlers,
+    // Outbound `net` API for feature modules driven by bus events (not inbound sockets).
     sendToSession,
     sendToSocket,
+    broadcastToRoom,
     sessionSockets
   };
 }

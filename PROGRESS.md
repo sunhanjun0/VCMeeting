@@ -71,8 +71,8 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 ### 阶段 3 · features · room（建房/加入/重连）
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
 |---|------|------|------|----------|------|
-| 3.1 | server `features/room`：`room:create`（nanoid 不可枚举 + passwordHash 加盐） | server/features/room | 2.1,2.2 | ack 返回 `{roomId, token, sessionId}`，创建者为 host | ⬜ |
-| 3.2 | server `features/room`：`room:join`（密码/token 校验）+ 加入快照(§5.3) + `participant:joined/left` 广播 | server/features/room | 3.1 | ack 返回完整快照；房号不可枚举 | ⬜ |
+| 3.1 | server `features/room`：`room:create`（nanoid 不可枚举 + passwordHash 加盐） | server/features/room | 2.1,2.2 | ack 返回 `{roomId, token, sessionId}`，创建者为 host | ✅ |
+| 3.2 | server `features/room`：`room:join`（密码/token 校验）+ 加入快照(§5.3) + `participant:joined/left` 广播 | server/features/room | 3.1 | ack 返回完整快照；房号不可枚举 | ✅ |
 | 3.3 | client `features/room`：Home 建房/加入表单 + Room 页装配 + sessionId 持久化 | client/features/room | 1.4 | 建房跳转 `/room/:id`；join 后拿快照渲染 | ⬜ |
 
 ### 阶段 4 · features · content（上传同源托管 + iframe 渲染）
