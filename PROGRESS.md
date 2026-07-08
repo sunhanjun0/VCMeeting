@@ -64,9 +64,9 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 ### 阶段 2 · services 无状态基础设施
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
 |---|------|------|------|----------|------|
-| 2.1 | `services/room-manager.js`：Room/Participant 内存态 CRUD + 空房回收 | server/services | 1.1 | 建/查/删房、参与者增删、超时回收单测通过 | ⬜ |
-| 2.2 | `services/token.js`：分享链接 token 签发/校验（24h TTL、可配、随房销毁失效、非一次性） | server/services | 0.2 | 有效期内校验通过，过期/房销毁失败 | ⬜ |
-| 2.3 | `services/content-store.js`：bundle 落盘、zip 解压、**zip slip 防护**、类型白名单、≤50MB、入口识别 | server/services | 0.2 | 恶意 `../` 路径被拒；超限/非白名单被拒；index.html 识别 | ⬜ |
+| 2.1 | `services/room-manager.js`：Room/Participant 内存态 CRUD + 空房回收 | server/services | 1.1 | 建/查/删房、参与者增删、超时回收单测通过 | ✅ |
+| 2.2 | `services/token.js`：分享链接 token 签发/校验（24h TTL、可配、随房销毁失效、非一次性） | server/services | 0.2 | 有效期内校验通过，过期/房销毁失败 | ✅ |
+| 2.3 | `services/content-store.js`：bundle 落盘、zip 解压、**zip slip 防护**、类型白名单、≤50MB、入口识别 | server/services | 0.2 | 恶意 `../` 路径被拒；超限/非白名单被拒；index.html 识别 | ✅ |
 
 ### 阶段 3 · features · room（建房/加入/重连）
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
