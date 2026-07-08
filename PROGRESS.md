@@ -56,10 +56,10 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 ### 阶段 1 · core 核心（先行，两端对称）
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
 |---|------|------|------|----------|------|
-| 1.1 | 服务端 `core/bus.js`、`events.js`、`registry.js`（FeatureModule 装配） | server/core | 0.2 | registry.use() 能注册模块并调 init | ⬜ |
-| 1.2 | 服务端 `core/socket-gateway.js`：网络↔总线桥接 + `{type,v,payload}` 信封 + 未知 type 忽略 + host 权限校验 | server/core | 1.1 | 入站事件翻译为总线事件；非法 host 事件返回 error | ⬜ |
-| 1.3 | 客户端 `core/bus.js`、`events.js`、`registry.js`、`store.js`（分片状态仓） | client/core | 0.3 | 模块可注册、读写自身切片、只读订阅他片 | ⬜ |
-| 1.4 | 客户端 `core/socket.js`：socket 单例 + 网络↔总线桥接（唯一碰 socket 处） | client/core | 1.3 | 总线事件可上网、网络事件入总线 | ⬜ |
+| 1.1 | 服务端 `core/bus.js`、`events.js`、`registry.js`（FeatureModule 装配） | server/core | 0.2 | registry.use() 能注册模块并调 init | ✅ |
+| 1.2 | 服务端 `core/socket-gateway.js`：网络↔总线桥接 + `{type,v,payload}` 信封 + 未知 type 忽略 + host 权限校验 | server/core | 1.1 | 入站事件翻译为总线事件；非法 host 事件返回 error | ✅ |
+| 1.3 | 客户端 `core/bus.js`、`events.js`、`registry.js`、`store.js`（分片状态仓） | client/core | 0.3 | 模块可注册、读写自身切片、只读订阅他片 | ✅ |
+| 1.4 | 客户端 `core/socket.js`：socket 单例 + 网络↔总线桥接（唯一碰 socket 处） | client/core | 1.3 | 总线事件可上网、网络事件入总线 | ✅ |
 
 ### 阶段 2 · services 无状态基础设施
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |

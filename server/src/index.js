@@ -6,6 +6,9 @@ import http from 'node:http';
 import express from 'express';
 import { Server as SocketIoServer } from 'socket.io';
 import { config } from './config.js';
+import { createBus } from './core/bus.js';
+import { createRegistry } from './core/registry.js';
+import { createSocketGateway } from './core/socket-gateway.js';
 
 const app = express();
 
@@ -19,13 +22,12 @@ const io = new SocketIoServer(httpServer, {
   cors: { origin: config.corsOrigin }
 });
 
-io.on('connection', (socket) => {
-  // Placeholder: core/socket-gateway (task 1.2) will bridge network <-> bus here.
-  console.log(`[socket] connected: ${socket.id}`);
-  socket.on('disconnect', (reason) => {
-    console.log(`[socket] disconnected: ${socket.id} (${reason})`);
-  });
-});
+// --- Core assembly (features are registered in later tasks) ---
+const bus = createBus();
+const registry = createRegistry({ bus, config });
+// registry.use(roomModule, contentModule, ...)  <-- tasks 3.x / 4.x
+
+createSocketGateway({ io, bus, handlers: registry.socketEvents() });
 
 httpServer.listen(config.port, () => {
   console.log(`[livepage] server listening on :${config.port}`);

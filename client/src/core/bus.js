@@ -1,0 +1,36 @@
+// In-process event bus (client side). Mirrors the server bus (TDD §13.2).
+// Lightweight pub/sub; feature modules talk via this bus + the store, never directly.
+
+export function createBus() {
+  /** @type {Map<string, Set<Function>>} */
+  const handlers = new Map();
+
+  function on(type, handler) {
+    let set = handlers.get(type);
+    if (!set) {
+      set = new Set();
+      handlers.set(type, set);
+    }
+    set.add(handler);
+    return () => off(type, handler);
+  }
+
+  function off(type, handler) {
+    const set = handlers.get(type);
+    if (!set) return;
+    set.delete(handler);
+    if (set.size === 0) handlers.delete(type);
+  }
+
+  function emit(type, payload) {
+    const set = handlers.get(type);
+    if (!set) return;
+    for (const handler of [...set]) handler(payload);
+  }
+
+  function clear() {
+    handlers.clear();
+  }
+
+  return { on, off, emit, clear };
+}
