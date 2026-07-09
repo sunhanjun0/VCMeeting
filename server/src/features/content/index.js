@@ -1,9 +1,10 @@
 // Content feature (server) — upload + same-origin hosting (TDD §8, §3).
-// Self-contained FeatureModule: owns the HTTP surface for content (upload now,
-// static hosting in task 4.2) and the content:* socket events (task 4.3).
+// Self-contained FeatureModule: owns the HTTP surface for content (upload +
+// static hosting) and the content:* socket events (task 4.3).
 // Talks to infrastructure via injected deps; never imports other features.
 
 import { createUploadHandler } from './upload.js';
+import { createContentStatic } from './hosting.js';
 
 export function createContentModule({ rooms, content, maxBytes }) {
   return {
@@ -18,6 +19,9 @@ export function createContentModule({ rooms, content, maxBytes }) {
         '/api/rooms/:roomId/content',
         createUploadHandler({ rooms, content, maxBytes })
       );
+
+      // §8.3 same-origin static hosting of uploaded bundles + security headers.
+      app.use('/content', createContentStatic({ content }));
     }
     // socketEvents (content:set → content:changed) arrive in task 4.3.
   };
