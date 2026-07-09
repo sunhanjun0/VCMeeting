@@ -4,9 +4,9 @@
 
 ## 当前阶段
 
-**M1 编码中。** 阶段 0-3、任务 4.1（上传接口）、4.2（静态托管 + 安全头）、4.3（`content:set` 内容切换）、4.4（client 上传 UI）已完成并通过测试/端到端验证。**下一步：任务 4.5** — client `features/sync/IframeStage.jsx`（M1 仅渲染）：sandbox iframe 加载 `/content/{id}/{entry}`（依赖 4.2、4.3）。
+**M1 编码中。** 阶段 0-3、阶段 4（内容：上传接口/静态托管/`content:set`/上传 UI/IframeStage 渲染）已全部完成并通过测试/端到端验证。**下一步：任务 5.1** — client Room 内「复制分享链接」（带 token，依赖 3.3、2.2）。
 >
-> 已验证流程：建房/加入/离开/重连 + `participant:*` 广播（见前）。内容：host 会话鉴权上传→201 返回 ContentBundle（多文件保目录 / 单 zip 解压，元数据落 `.bundle.json`）；`GET /content/:bundleId/*` 同源托管，HTML 附 §8.3 CSP + `nosniff`，`..` 与 dotfile 均被拦；`content:set{bundleId}`（host-only）→ 更新房间 + 广播 `content:changed{bundle}`（含自身），新加入者快照携带 bundle。**client `features/content`：host-only 上传面板（拖拽/多文件保目录/zip）+ XHR 进度条，上传成功→自动 `content:set`→`content:changed` 回填 `content` slice 显示「当前演示」；`needsEntry` 走提示不自动激活。三铁律：Room.jsx 应用层用内容槽组合 RoomView↔UploadPanel，content actions 经 `store.getSlice('room')` 只读跨片，不跨 feature import。端到端（browse）验证：建房→拖入 index.html→201→托管页 200 渲染。** 46 个后端测试通过（room-manager 9 / token 7 / content-store 12 / 上传 8 / 托管 6 / content:set 4）；client 生产构建通过。
+> 已验证流程：建房/加入/离开/重连 + `participant:*` 广播（见前）。内容：host 会话鉴权上传→201 返回 ContentBundle（多文件保目录 / 单 zip 解压，元数据落 `.bundle.json`）；`GET /content/:bundleId/*` 同源托管，HTML 附 §8.3 CSP + `nosniff`，`..` 与 dotfile 均被拦；`content:set{bundleId}`（host-only）→ 更新房间 + 广播 `content:changed{bundle}`（含自身），新加入者快照携带 bundle。client `features/content`：host-only 上传面板（拖拽/多文件保目录/zip）+ XHR 进度条，上传成功→自动 `content:set`→`content:changed` 回填 `content` slice。**client `features/sync/IframeStage.jsx`（M1 仅渲染）：sandbox iframe（`allow-scripts allow-same-origin`，§351）加载 `/content/{id}/{entry}`（每段 encodeURIComponent 支持中文/子目录）；active 来源 `content.active ?? room.content`（运行时切换 / join 快照回退，跨片只读）；`needsEntry`/无内容走占位。三铁律：Room.jsx 应用层内容槽组合 UploadPanel+IframeStage，sync/content 互不 import，仅经 bus+store 通信。端到端（browse）：建房空占位→上传→iframe 同源渲染并可读 `contentDocument`；guest 加入经快照回退渲染、无上传面板；host 换内容→`content:changed`→guest iframe 实时重载（§176）。** 46 个后端测试通过（room-manager 9 / token 7 / content-store 12 / 上传 8 / 托管 6 / content:set 4）；client 生产构建通过。
 
 ## 文档地图（读这些，按顺序）
 
@@ -84,7 +84,7 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 | 4.2 | server：静态托管 `GET /content/:bundleId/*` + CSP/安全头(§8.3) | server/features/content | 4.1 | 同源可取内容页，响应头含 CSP | ✅ |
 | 4.3 | server：`content:set` → 更新房间 + 广播 `content:changed` | server/features/content | 4.1 | 全员收到内容切换事件 | ✅ |
 | 4.4 | client `features/content`：上传 UI（拖拽/zip）+ 进度 | client/features/content | 3.3,4.1 | 主持人可上传，见结果反馈 | ✅ |
-| 4.5 | client `features/sync/IframeStage.jsx`（M1 仅渲染）：sandbox iframe 加载 `/content/{id}/{entry}` | client/features/sync | 4.2,4.3 | iframe 同源渲染，属性 `allow-scripts allow-same-origin` | ⬜ |
+| 4.5 | client `features/sync/IframeStage.jsx`（M1 仅渲染）：sandbox iframe 加载 `/content/{id}/{entry}` | client/features/sync | 4.2,4.3 | iframe 同源渲染，属性 `allow-scripts allow-same-origin` | ✅ |
 
 ### 阶段 5 · 分享链接闭环
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |

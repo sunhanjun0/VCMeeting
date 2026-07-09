@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Result, Button } from 'antd';
+import { Result, Button, Space } from 'antd';
 import { useApp } from '../AppContext.jsx';
 import { useSlice } from '../core/store.js';
 import RoomView from '../features/room/RoomView.jsx';
 import UploadPanel from '../features/content/UploadPanel.jsx';
+import IframeStage from '../features/sync/IframeStage.jsx';
 
 // Assembly only. If there's no active session for this room (e.g. a hard refresh),
 // prompt the user back to Home. Auto-reconnect via share token is task 5.2.
@@ -24,11 +25,15 @@ export default function Room() {
       />
     );
   }
-  // App-layer composition: the host gets the content upload panel inside the room
-  // shell. Cross-feature wiring lives here (assembly), not inside a feature (§13).
+  // App-layer composition: everyone sees the presentation stage; the host also gets
+  // the upload panel above it. Cross-feature wiring lives here (assembly), not inside
+  // a feature (§13).
   return (
     <RoomView>
-      {room.role === 'host' && <UploadPanel />}
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        {room.role === 'host' && <UploadPanel />}
+        <IframeStage />
+      </Space>
     </RoomView>
   );
 }
