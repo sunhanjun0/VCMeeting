@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-**M1 编码中。** 阶段 0-4 全部完成、任务 5.1（复制分享链接）已完成并通过测试/端到端验证。**下一步：任务 5.2** — client 带 token 进入自动 join（无需密码），过期回退到密码（依赖 5.1、3.2）。这是 M1 收尾。
+**M1 完成 ✅。** 阶段 0-5 全部完成并通过测试/端到端验证。**下一步：M2 同步引擎**（视口锚点滚动 + 稳定选择器点击 + 页内导航；单一 `latestState` + version 去乱序）——最难最核心。
 >
 > 已验证流程：建房/加入/离开/重连 + `participant:*` 广播（见前）。内容：host 会话鉴权上传→201 返回 ContentBundle（多文件保目录 / 单 zip 解压，元数据落 `.bundle.json`）；`GET /content/:bundleId/*` 同源托管，HTML 附 §8.3 CSP + `nosniff`，`..` 与 dotfile 均被拦；`content:set{bundleId}`（host-only）→ 更新房间 + 广播 `content:changed{bundle}`（含自身），新加入者快照携带 bundle。client `features/content`：host-only 上传面板（拖拽/多文件保目录/zip）+ XHR 进度条，上传成功→自动 `content:set`→`content:changed` 回填 `content` slice。**client `features/sync/IframeStage.jsx`（M1 仅渲染）：sandbox iframe（`allow-scripts allow-same-origin`，§351）加载 `/content/{id}/{entry}`（每段 encodeURIComponent 支持中文/子目录）；active 来源 `content.active ?? room.content`（运行时切换 / join 快照回退，跨片只读）；`needsEntry`/无内容走占位。三铁律：Room.jsx 应用层内容槽组合 UploadPanel+IframeStage，sync/content 互不 import，仅经 bus+store 通信。端到端（browse）：建房空占位→上传→iframe 同源渲染并可读 `contentDocument`；guest 加入经快照回退渲染、无上传面板；host 换内容→`content:changed`→guest iframe 实时重载（§176）。分享链接：host header「复制分享链接」→ `navigator.clipboard.writeText` 生成 `/room/:id?token=...`（token 解码含房间号+过期，§2.2），clipboard 不可用时回退 `modal.info` 展示链接手动复制；按钮以 `room.token` 门控（密码 join 的 guest 无 token 不显示）。** 46 个后端测试通过（room-manager 9 / token 7 / content-store 12 / 上传 8 / 托管 6 / content:set 4）；client 生产构建通过。
 
@@ -36,8 +36,8 @@
 
 ## 里程碑
 
-- **M1**：建房/加入 + 上传同源托管 + iframe 渲染 + 分享链接 ← **下一步从这里开始**
-- **M2**：同步引擎（视口锚点 + 选择器点击 + 页内导航）——最难最核心
+- **M1**：建房/加入 + 上传同源托管 + iframe 渲染 + 分享链接 ✅ **已完成**
+- **M2**：同步引擎（视口锚点 + 选择器点击 + 页内导航）——最难最核心 ← **下一步从这里开始**
 - **M3**：跟随/脱离/回归 + 权限（静音/拉回/移交）+ 断线重连
 - **M4**：Mesh 语音（free/PTT）+ 静音状态 + Docker 部署 + 文档
 - **v1.1（未来）**：LiveKit `VoiceProvider`/`VoiceBackend` 解锁 >20 人
@@ -90,7 +90,7 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
 |---|------|------|------|----------|------|
 | 5.1 | client：Room 内「复制分享链接」（带 token） | client/features/room | 3.3,2.2 | 生成 `/room/:id?token=...` | ✅ |
-| 5.2 | client：带 token 进入自动 join（无需密码），过期回退到密码 | client/features/room | 5.1,3.2 | 有效 token 直进；过期提示输密码 | ⬜ |
+| 5.2 | client：带 token 进入自动 join（无需密码），过期回退到密码 | client/features/room | 5.1,3.2 | 有效 token 直进；过期提示输密码 | ✅ |
 
 > M1 不含同步引擎算法（M2）、语音（M4）；IframeStage 此阶段只渲染不采集。
 

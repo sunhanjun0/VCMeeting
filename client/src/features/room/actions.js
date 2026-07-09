@@ -46,7 +46,13 @@ export async function joinRoom(app, { roomId, name, password, token }) {
   // Reuse a stored sessionId so the server can restore our record (reconnect).
   const sessionId = loadSession(roomId);
   const res = await app.net.request('room:join', { roomId, name, password, token, sessionId });
-  if (!res.ok) throw new Error(res.error?.message || 'Failed to join room');
+  if (!res.ok) {
+    // Surface the error code so callers can distinguish an expired/invalid share
+    // token (→ fall back to password) from a wrong password (§9, task 5.2).
+    const err = new Error(res.error?.message || 'Failed to join room');
+    err.code = res.error?.code;
+    throw err;
+  }
   const snap = res.data;
   saveSession(roomId, snap.sessionId);
   app.store.setSlice('room', {
