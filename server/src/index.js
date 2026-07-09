@@ -11,6 +11,7 @@ import { createRoomManager } from './services/room-manager.js';
 import { createTokenService } from './services/token.js';
 import { createContentStore } from './services/content-store.js';
 import { createRoomModule } from './features/room/index.js';
+import { createContentModule } from './features/content/index.js';
 
 const app = express();
 
@@ -34,10 +35,12 @@ const bus = createBus();
 // Gateway is created first so feature modules can receive its outbound `net` API;
 // handlers are attached afterwards once modules have registered their socketEvents.
 const gateway = createSocketGateway({ io, bus });
-const registry = createRegistry({ bus, config, services: { rooms, tokens, content }, net: gateway });
+// `http` (the express app) lets features that need an HTTP surface (e.g. content
+// upload/hosting) mount their own routes during init — keeping core route-agnostic.
+const registry = createRegistry({ bus, config, services: { rooms, tokens, content }, net: gateway, http: app });
 registry.use(
-  createRoomModule({ rooms, tokens })
-  // contentModule, ... <-- task 4.x
+  createRoomModule({ rooms, tokens }),
+  createContentModule({ rooms, content, maxBytes: config.uploadMaxMb * 1024 * 1024 })
 );
 gateway.setHandlers(registry.socketEvents());
 

@@ -4,9 +4,9 @@
 
 ## 当前阶段
 
-**M1 编码中。** 阶段 0（脚手架）、阶段 1（core 双层总线）、阶段 2（services：room-manager/token/content-store）、阶段 3（room 建房/加入/重连，两端）已完成并通过浏览器端到端验证。**下一步：阶段 4.1** — 服务端内容上传 `POST /api/rooms/:roomId/content`（multipart + host 会话鉴权）→ content-store。
+**M1 编码中。** 阶段 0（脚手架）、阶段 1（core 双层总线）、阶段 2（services：room-manager/token/content-store）、阶段 3（room 建房/加入/重连，两端）、任务 4.1（server 内容上传接口）已完成并通过测试/端到端验证。**下一步：任务 4.2** — 服务端静态托管 `GET /content/:bundleId/*` + CSP/安全头(§8.3)。
 >
-> 已验证流程：建房→跳转 `/room/:id`（host 角色）；访客加入→角色/人数正确；`participant:joined/left` 实时广播；离开→回首页；同浏览器 sessionId 重连以 host 恢复。28 个后端单测通过（room-manager 9 / token 7 / content-store 12）。
+> 已验证流程：建房→跳转 `/room/:id`（host 角色）；访客加入→角色/人数正确；`participant:joined/left` 实时广播；离开→回首页；同浏览器 sessionId 重连以 host 恢复。上传：host 会话鉴权→201 返回 ContentBundle（多文件保留目录结构 / 单 zip 解压），非 host→403，冻结房→403。36 个后端测试通过（room-manager 9 / token 7 / content-store 12 / 上传集成 8）。
 
 ## 文档地图（读这些，按顺序）
 
@@ -80,7 +80,7 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 ### 阶段 4 · features · content（上传同源托管 + iframe 渲染）
 | # | 任务 | 模块 | 依赖 | 验收标准 | 状态 |
 |---|------|------|------|----------|------|
-| 4.1 | server：`POST /api/rooms/:roomId/content`（multipart，host 会话鉴权）→ content-store | server/features/content | 2.3,3.2 | 上传成功返回 ContentBundle；非 host 拒绝 | ⬜ |
+| 4.1 | server：`POST /api/rooms/:roomId/content`（multipart，host 会话鉴权）→ content-store | server/features/content | 2.3,3.2 | 上传成功返回 ContentBundle；非 host 拒绝 | ✅ |
 | 4.2 | server：静态托管 `GET /content/:bundleId/*` + CSP/安全头(§8.3) | server/features/content | 4.1 | 同源可取内容页，响应头含 CSP | ⬜ |
 | 4.3 | server：`content:set` → 更新房间 + 广播 `content:changed` | server/features/content | 4.1 | 全员收到内容切换事件 | ⬜ |
 | 4.4 | client `features/content`：上传 UI（拖拽/zip）+ 进度 | client/features/content | 3.3,4.1 | 主持人可上传，见结果反馈 | ⬜ |
