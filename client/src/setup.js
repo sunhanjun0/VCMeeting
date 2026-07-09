@@ -7,6 +7,7 @@ import { createStore } from './core/store.js';
 import { createSocketClient } from './core/socket.js';
 import { createRegistry } from './core/registry.js';
 import { createRoomModule } from './features/room/index.js';
+import { createContentModule } from './features/content/index.js';
 
 export function createApp({ url = '/', config = {} } = {}) {
   const bus = createBus();
@@ -16,8 +17,9 @@ export function createApp({ url = '/', config = {} } = {}) {
 
   const registry = createRegistry({ bus, store, config, net });
   registry.use(
-    createRoomModule()
-    // contentModule, syncModule, ... <-- tasks 4.x / M2+
+    createRoomModule(),
+    createContentModule()
+    // syncModule, ... <-- task 4.5 / M2+
   );
 
   return {

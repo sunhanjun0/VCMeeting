@@ -1,5 +1,6 @@
-// Room view (room feature UI). Renders room identity + live participant list.
-// The iframe stage and other features mount alongside this in later tasks.
+// Room view (room feature UI). Renders room identity + live participant list, and
+// hosts a content slot (filled by the app layer with other features' UI, e.g. the
+// upload panel / iframe stage) so the room feature stays free of cross-feature imports.
 
 import { useNavigate } from 'react-router-dom';
 import { Layout, Typography, List, Tag, Badge, Button, Space } from 'antd';
@@ -7,7 +8,7 @@ import { useApp } from '../../AppContext.jsx';
 import { useSlice } from '../../core/store.js';
 import { leaveRoom } from './actions.js';
 
-export default function RoomView() {
+export default function RoomView({ children }) {
   const app = useApp();
   const navigate = useNavigate();
   const room = useSlice(app.store, 'room');
@@ -28,7 +29,9 @@ export default function RoomView() {
       </Layout.Header>
       <Layout>
         <Layout.Content style={{ padding: 24 }}>
-          <Typography.Paragraph type="secondary">演示区（iframe 舞台将在后续任务挂载）。</Typography.Paragraph>
+          {children ?? (
+            <Typography.Paragraph type="secondary">演示区（iframe 舞台将在后续任务挂载）。</Typography.Paragraph>
+          )}
         </Layout.Content>
         <Layout.Sider width={260} theme="light" style={{ padding: 16 }}>
           <Typography.Title level={5}>参会者（{room.participants.length}）</Typography.Title>
