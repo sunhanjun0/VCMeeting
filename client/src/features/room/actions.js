@@ -73,3 +73,11 @@ export async function leaveRoom(app) {
     participants: []
   });
 }
+
+// Build a shareable room link carrying the link-token (§2.2). Recipients open it to
+// auto-join without the password until the token expires (auto-join is task 5.2);
+// without a token it's just the plain room URL (they'll need the password).
+export function buildShareLink(roomId, token) {
+  const base = `${window.location.origin}/room/${encodeURIComponent(roomId)}`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
+}

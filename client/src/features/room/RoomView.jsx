@@ -3,19 +3,32 @@
 // upload panel / iframe stage) so the room feature stays free of cross-feature imports.
 
 import { useNavigate } from 'react-router-dom';
-import { Layout, Typography, List, Tag, Badge, Button, Space } from 'antd';
+import { Layout, Typography, List, Tag, Badge, Button, Space, App as AntApp } from 'antd';
 import { useApp } from '../../AppContext.jsx';
 import { useSlice } from '../../core/store.js';
-import { leaveRoom } from './actions.js';
+import { leaveRoom, buildShareLink } from './actions.js';
 
 export default function RoomView({ children }) {
   const app = useApp();
   const navigate = useNavigate();
+  const { message, modal } = AntApp.useApp();
   const room = useSlice(app.store, 'room');
 
   async function onLeave() {
     await leaveRoom(app);
     navigate('/');
+  }
+
+  // Copy the token-bearing share link. navigator.clipboard needs a secure context
+  // (fine on localhost/HTTPS); if it's unavailable we surface the link for manual copy.
+  async function onCopyLink() {
+    const link = buildShareLink(room.roomId, room.token);
+    try {
+      await navigator.clipboard.writeText(link);
+      message.success('分享链接已复制');
+    } catch {
+      modal.info({ title: '复制分享链接', content: link });
+    }
   }
 
   return (
@@ -25,7 +38,12 @@ export default function RoomView({ children }) {
           <Typography.Text strong style={{ color: '#fff' }}>房间 {room.roomId}</Typography.Text>
           <Tag color={room.role === 'host' ? 'gold' : 'blue'}>{room.role === 'host' ? '主持人' : '参会者'}</Tag>
         </Space>
-        <Button size="small" onClick={onLeave}>离开</Button>
+        <Space>
+          {room.token && (
+            <Button size="small" onClick={onCopyLink}>复制分享链接</Button>
+          )}
+          <Button size="small" onClick={onLeave}>离开</Button>
+        </Space>
       </Layout.Header>
       <Layout>
         <Layout.Content style={{ padding: 24 }}>
