@@ -53,6 +53,7 @@ export function createRoomManager({ idleReclaimMs = DEFAULT_IDLE_RECLAIM_MS, now
       passwordHash,
       hostSessionId,
       contentBundleId: null,
+      contentBundle: null,
       latestState: newPresentationState(),
       participants: new Map([[hostSessionId, host]]),
       createdAt: ts,
@@ -159,11 +160,12 @@ export function createRoomManager({ idleReclaimMs = DEFAULT_IDLE_RECLAIM_MS, now
     return room.latestState;
   }
 
-  function setContentBundle(roomId, bundleId) {
+  function setContentBundle(roomId, bundle) {
     const room = rooms.get(roomId);
     if (!room) return null;
-    room.contentBundleId = bundleId;
-    room.latestState = { ...room.latestState, contentBundleId: bundleId, updatedAt: now() };
+    room.contentBundle = bundle;
+    room.contentBundleId = bundle.id;
+    room.latestState = { ...room.latestState, contentBundleId: bundle.id, updatedAt: now() };
     room.lastActiveAt = now();
     return room;
   }

@@ -18,6 +18,7 @@ import { nanoid } from 'nanoid';
 
 const DEFAULT_MAX_BYTES = 50 * 1024 * 1024; // 50MB
 const DEFAULT_MAX_ENTRIES = 2000;
+const META_FILE = '.bundle.json'; // dotfile: never served by express.static (dotfiles:'ignore')
 const S_IFMT = 0o170000;
 const S_IFLNK = 0o120000;
 
@@ -87,9 +88,10 @@ export function createContentStore({
     return { entryFile: null, needsEntry: true, candidates };
   }
 
-  function makeMeta(id, entry, sizeBytes, uploadedBy) {
+  function makeMeta(id, entry, sizeBytes, uploadedBy, roomId) {
     return {
       id,
+      roomId: roomId ?? null,
       entryFile: entry.entryFile,
       needsEntry: entry.needsEntry,
       candidates: entry.candidates,
@@ -99,8 +101,30 @@ export function createContentStore({
     };
   }
 
+  // Persist bundle metadata alongside the files so it survives the upload→content:set
+  // gap (the server needs the full ContentBundle to broadcast content:changed and to
+  // fill the join snapshot). Stored as a dotfile so it's never served statically.
+  async function writeMeta(bundleId, meta) {
+    await fsp.writeFile(path.join(bundleDir(bundleId), META_FILE), JSON.stringify(meta), 'utf8');
+  }
+
+  // Reject anything that isn't a plain bundle id (nanoid alphabet) so a hostile
+  // bundleId can never escape the bundles root when reading meta.
+  const isValidBundleId = (id) => typeof id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(id);
+
+  // Read a stored ContentBundle by id. Returns null if unknown/unreadable.
+  async function getBundle(bundleId) {
+    if (!isValidBundleId(bundleId)) return null;
+    try {
+      const raw = await fsp.readFile(path.join(bundleDir(bundleId), META_FILE), 'utf8');
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
   // Store a multi-file upload. files: [{ relativePath, buffer }].
-  async function storeFiles(files, { uploadedBy = null } = {}) {
+  async function storeFiles(files, { uploadedBy = null, roomId = null } = {}) {
     if (!Array.isArray(files) || files.length === 0) {
       throw new ContentError('empty', 'No files uploaded');
     }
@@ -124,7 +148,9 @@ export function createContentStore({
         await fsp.writeFile(target, f.buffer);
         relPaths.push(path.relative(dir, target).replace(/\\/g, '/'));
       }
-      return makeMeta(id, identifyEntry(relPaths), total, uploadedBy);
+      const meta = makeMeta(id, identifyEntry(relPaths), total, uploadedBy, roomId);
+      await writeMeta(id, meta);
+      return meta;
     } catch (err) {
       await fsp.rm(dir, { recursive: true, force: true });
       throw err;
@@ -132,7 +158,7 @@ export function createContentStore({
   }
 
   // Store a single .zip (buffer or path). Streams entries, enforcing all guards.
-  async function storeZip(zipInput, { uploadedBy = null } = {}) {
+  async function storeZip(zipInput, { uploadedBy = null, roomId = null } = {}) {
     const id = nanoid(12);
     const dir = bundleDir(id);
     try {
@@ -140,7 +166,9 @@ export function createContentStore({
       const relPaths = [];
       const total = await extractZip(zipInput, dir, { maxBytes, maxEntries, relPaths });
       if (relPaths.length === 0) throw new ContentError('empty', 'Zip contains no files');
-      return makeMeta(id, identifyEntry(relPaths), total, uploadedBy);
+      const meta = makeMeta(id, identifyEntry(relPaths), total, uploadedBy, roomId);
+      await writeMeta(id, meta);
+      return meta;
     } catch (err) {
       await fsp.rm(dir, { recursive: true, force: true });
       throw err;
@@ -159,6 +187,7 @@ export function createContentStore({
   return {
     storeFiles,
     storeZip,
+    getBundle,
     deleteBundle,
     bundleDir,
     bundlesRoot,

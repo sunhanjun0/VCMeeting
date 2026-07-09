@@ -82,12 +82,12 @@ export function createUploadHandler({ rooms, content, maxBytes, maxEntries = DEF
     try {
       let bundle;
       if (files.length === 1 && extOf(files[0].originalname) === 'zip') {
-        bundle = await content.storeZip(files[0].buffer, { uploadedBy: sessionId });
+        bundle = await content.storeZip(files[0].buffer, { uploadedBy: sessionId, roomId });
       } else {
         const relPaths = parsePaths(req.body?.paths, files.length);
         bundle = await content.storeFiles(
           files.map((f, i) => ({ relativePath: relPaths[i] || f.originalname, buffer: f.buffer })),
-          { uploadedBy: sessionId }
+          { uploadedBy: sessionId, roomId }
         );
       }
       rooms.touch(roomId);

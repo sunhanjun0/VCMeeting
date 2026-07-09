@@ -79,8 +79,10 @@ test('transferHost swaps roles', () => {
 test('setContentBundle updates room + latestState', () => {
   const rm = createRoomManager();
   const room = rm.createRoom({ passwordHash: 'h', hostSessionId: 'h1', hostName: 'A' });
-  rm.setContentBundle(room.id, 'bundle1');
+  const bundle = { id: 'bundle1', entryFile: 'index.html', roomId: room.id };
+  rm.setContentBundle(room.id, bundle);
   assert.equal(rm.getRoom(room.id).contentBundleId, 'bundle1');
+  assert.deepEqual(rm.getRoom(room.id).contentBundle, bundle);
   assert.equal(rm.getRoom(room.id).latestState.contentBundleId, 'bundle1');
 });
 

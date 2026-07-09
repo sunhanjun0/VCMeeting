@@ -4,9 +4,9 @@
 
 ## 当前阶段
 
-**M1 编码中。** 阶段 0（脚手架）、阶段 1（core 双层总线）、阶段 2（services）、阶段 3（room，两端）、任务 4.1（上传接口）、任务 4.2（静态托管 + 安全头）已完成并通过测试/端到端验证。**下一步：任务 4.3** — `content:set` → 更新房间 + 广播 `content:changed`（server/features/content）。
+**M1 编码中。** 阶段 0-3、任务 4.1（上传接口）、4.2（静态托管 + 安全头）、4.3（`content:set` 内容切换）已完成并通过测试/端到端验证。**下一步：任务 4.4** — client `features/content`：上传 UI（拖拽/zip）+ 进度（依赖 3.3、4.1）。
 >
-> 已验证流程：建房→跳转 `/room/:id`（host 角色）；访客加入→角色/人数正确；`participant:joined/left` 实时广播；离开→回首页；同浏览器 sessionId 重连以 host 恢复。上传：host 会话鉴权→201 返回 ContentBundle（多文件保留目录结构 / 单 zip 解压），非 host→403，冻结房→403。托管：`GET /content/:bundleId/*` 同源返回，HTML 页附 §8.3 CSP + `nosniff`，`..` 穿越被拦，目录请求落到 index.html。42 个后端测试通过（room-manager 9 / token 7 / content-store 12 / 上传 8 / 托管 6）。
+> 已验证流程：建房/加入/离开/重连 + `participant:*` 广播（见前）。内容：host 会话鉴权上传→201 返回 ContentBundle（多文件保目录 / 单 zip 解压，元数据落 `.bundle.json`）；`GET /content/:bundleId/*` 同源托管，HTML 附 §8.3 CSP + `nosniff`，`..` 与 dotfile 均被拦；`content:set{bundleId}`（host-only）→ 更新房间 + 广播 `content:changed{bundle}`（含自身），新加入者快照携带 bundle。46 个后端测试通过（room-manager 9 / token 7 / content-store 12 / 上传 8 / 托管 6 / content:set 4）。
 
 ## 文档地图（读这些，按顺序）
 
@@ -82,7 +82,7 @@ M1 范围＝建房/加入 + 上传同源托管（含 zip slip 防护）+ iframe 
 |---|------|------|------|----------|------|
 | 4.1 | server：`POST /api/rooms/:roomId/content`（multipart，host 会话鉴权）→ content-store | server/features/content | 2.3,3.2 | 上传成功返回 ContentBundle；非 host 拒绝 | ✅ |
 | 4.2 | server：静态托管 `GET /content/:bundleId/*` + CSP/安全头(§8.3) | server/features/content | 4.1 | 同源可取内容页，响应头含 CSP | ✅ |
-| 4.3 | server：`content:set` → 更新房间 + 广播 `content:changed` | server/features/content | 4.1 | 全员收到内容切换事件 | ⬜ |
+| 4.3 | server：`content:set` → 更新房间 + 广播 `content:changed` | server/features/content | 4.1 | 全员收到内容切换事件 | ✅ |
 | 4.4 | client `features/content`：上传 UI（拖拽/zip）+ 进度 | client/features/content | 3.3,4.1 | 主持人可上传，见结果反馈 | ⬜ |
 | 4.5 | client `features/sync/IframeStage.jsx`（M1 仅渲染）：sandbox iframe 加载 `/content/{id}/{entry}` | client/features/sync | 4.2,4.3 | iframe 同源渲染，属性 `allow-scripts allow-same-origin` | ⬜ |
 
